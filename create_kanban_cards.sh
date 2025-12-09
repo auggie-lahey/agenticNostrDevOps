@@ -22,13 +22,6 @@ if [ -z "$BOARD_ID" ]; then
     exit 1
 fi
 
-# Extract pubkey from npub (consistent with event creation)
-CONSISTENT_PUBKEY=$(nak decode "$NPUB")
-if [ -z "$CONSISTENT_PUBKEY" ]; then
-    echo "Error: Could not decode npub to pubkey"
-    exit 1
-fi
-
 echo "Board ID: $BOARD_ID"
 echo "Creating cards for board..."
 

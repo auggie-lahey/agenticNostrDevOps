@@ -59,7 +59,7 @@ echo "Test 2.5: Verifying card board linking format"
 A_TAG_VALID=false
 # Check if cards have proper 'a' tags linking to board
 for RELAY in "${RELAYS[@]}"; do
-    CARDS_QUERY=$(nak req --author "$QUERY_PUBKEY" -k 30302 "$RELAY" 2>/dev/null | timeout 10 cat 2>/dev/null || echo "")
+    CARDS_QUERY=$(nak req --author "$QUERY_PUBKEY" -k 30302 "$RELAY" -q)
     if [ -n "$CARDS_QUERY" ]; then
         A_CARDS=$(echo "$CARDS_QUERY" | jq -r '.tags[] | select(.[0] == "a") | .[1]' | grep -c "30301:$QUERY_PUBKEY:$BOARD_ID" || echo "0")
         if [ "$A_CARDS" -gt 0 ]; then

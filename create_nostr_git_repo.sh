@@ -28,13 +28,6 @@ echo "Creating Nostr Git repository..."
 echo "Repository: $REPO_NAME"
 echo "Title: $REPO_TITLE"
 
-# Extract pubkey from nsec
-CONSISTENT_PUBKEY=$(nak key public "$NSEC")
-if [ -z "$CONSISTENT_PUBKEY" ]; then
-    echo "Error: Could not extract pubkey from nsec"
-    exit 1
-fi
-
 echo "Using pubkey: $CONSISTENT_PUBKEY"
 
 # Extract user's actual npub from YAML file for Git workshop URL
@@ -56,8 +49,6 @@ REPO_EVENT=$(nak event \
     -t "relays=wss://relay.ngit.dev" \
     -t "relays=wss://gitnostr.com" \
     -t "relays=wss://relay.damus.io" \
-    -t "relays=wss://nos.lol" \
-    -t "relays=wss://relay.nostr.band" \
     -t "maintainers=$USER_NPUB" \
     -t "alt=git repository: $REPO_NAME" \
     -c "" \
