@@ -80,7 +80,7 @@ BOARD_FOUND=false
 if [ -n "$BOARD_EVENT_ID" ]; then
     # Test board event on relay
     echo "🔍 Testing: Board event on relay..."
-    BOARD_QUERY=$($NAK_PATH req --id "$BOARD_EVENT_ID" wss://relay.damus.io 2>/dev/null)
+    BOARD_QUERY=$($NAK_PATH req --id "$BOARD_EVENT_ID" $RELAY 2>/dev/null)
     if [ -n "$BOARD_QUERY" ]; then
         echo "✅ SUCCESS: Board event found on relay"
         BOARD_FOUND=true
@@ -114,7 +114,7 @@ echo "Testing Kanban card creation and mapping..."
 
 if [ "$CARDS_CREATED" -gt 0 ]; then
     echo "🔍 Testing: Card events on relay..."
-    CARDS_QUERY=$($NAK_PATH req --author "$PUBKEY" -k 30302 wss://relay.damus.io 2>/dev/null)
+    CARDS_QUERY=$($NAK_PATH req --author "$PUBKEY" -k 30302 $RELAY 2>/dev/null)
     
     if [ -n "$CARDS_QUERY" ]; then
         TOTAL_CARDS=$(echo "$CARDS_QUERY" | jq length 2>/dev/null || echo "0")
@@ -169,7 +169,7 @@ echo "Testing Git repository creation and commits..."
 
 if [ -n "$REPO_EVENT_ID" ]; then
     echo "🔍 Testing: Repository event on relay..."
-    REPO_QUERY=$($NAK_PATH req --id "$REPO_EVENT_ID" wss://relay.damus.io 2>/dev/null)
+    REPO_QUERY=$($NAK_PATH req --id "$REPO_EVENT_ID" $RELAY 2>/dev/null)
     if [ -n "$REPO_QUERY" ]; then
         echo "✅ SUCCESS: Repository event found on relay"
         
@@ -204,7 +204,7 @@ if [ -n "$REPO_EVENT_ID" ]; then
     # Test for commit events
     if [ -n "$REPO_ID" ]; then
         echo "🔍 Testing: Commit events on relay..."
-        COMMIT_QUERY=$($NAK_PATH req --author "$PUBKEY" -k 30618 -d "$REPO_ID" wss://relay.damus.io 2>/dev/null)
+        COMMIT_QUERY=$($NAK_PATH req --author "$PUBKEY" -k 30618 -d "$REPO_ID" $RELAY 2>/dev/null)
         if [ -n "$COMMIT_QUERY" ]; then
             COMMIT_COUNT=$(echo "$COMMIT_QUERY" | jq length 2>/dev/null || echo "0")
             echo "✅ SUCCESS: Found $COMMIT_COUNT commit events"

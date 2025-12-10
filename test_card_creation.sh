@@ -12,7 +12,7 @@ BOARD_ID=$(yq e -r '.nostr.board.id' "$config")
 EVENT_ID=$(yq e -r '.nostr.board.event_id' "$config")
 
 # Use only damus relay
-RELAYS=("wss://relay.damus.io")
+RELAYS=("$RELAY")
 
 # Test 1: Query board event to verify board exists
 echo "Test 1: Verifying board exists"

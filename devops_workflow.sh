@@ -22,7 +22,7 @@ export NPUB_DECODED=$(nak decode "$NPUB" --pubkey)
 export PUBKEY=$NPUB_DECODED
 export QUERY_PUBKEY=$NPUB_DECODED
 export CONSISTENT_PUBKEY=$NPUB_DECODED
-export RELAY="wss://relay.damus.io"
+export RELAY="wss://relay.ngit.dev"
 
 echo ""
 echo Step 2: Check if board exists, create only if missing

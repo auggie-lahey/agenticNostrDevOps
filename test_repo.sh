@@ -12,7 +12,7 @@ test_repository_exists() {
     echo "🔍 Testing: Repository exists on relay..."
     
     # Query for repository events (kind 30617)
-    REPO_EVENTS=$(nak req --author "$PUBKEY" -k 30617 wss://relay.damus.io | jq -r '.id' 2>/dev/null)
+    REPO_EVENTS=$(nak req --author "$PUBKEY" -k 30617 $RELAY | jq -r '.id' 2>/dev/null)
     
     if [ -n "$REPO_EVENTS" ]; then
         echo "✅ SUCCESS: Found repository events on relay"
@@ -21,7 +21,7 @@ test_repository_exists() {
         # Try to get details from relay (fallback)
         FIRST_EVENT_ID=$(echo "$REPO_EVENTS" | head -1)
         if [ -n "$FIRST_EVENT_ID" ] && [ "$FIRST_EVENT_ID" != "null" ]; then
-            REPO_DETAILS=$(nak req --author "$PUBKEY" -k 30617 -e "$FIRST_EVENT_ID" wss://relay.damus.io 2>/dev/null)
+            REPO_DETAILS=$(nak req --author "$PUBKEY" -k 30617 -e "$FIRST_EVENT_ID" $RELAY 2>/dev/null)
             if [ -n "$REPO_DETAILS" ] && [ "$REPO_DETAILS" != "null" ] && [ "$REPO_DETAILS" != "" ]; then
                 GRASP_TAG=$(echo "$REPO_DETAILS" | jq -r '.tags[] | select(.[0] == "grasp")[1]' 2>/dev/null)
                 if [ -n "$GRASP_TAG" ] && [ "$GRASP_TAG" != "null" ]; then
@@ -49,7 +49,7 @@ test_commit_events() {
     echo "🔍 Testing: Commit events (kind 30618)..."
     
     # Query for commit events (kind 30618)
-    COMMIT_EVENTS=$(nak req --author "$PUBKEY" -k 30618 wss://relay.damus.io | jq -r '.id' 2>/dev/null)
+    COMMIT_EVENTS=$(nak req --author "$PUBKEY" -k 30618 $RELAY | jq -r '.id' 2>/dev/null)
     
     if [ -n "$COMMIT_EVENTS" ]; then
         echo "✅ SUCCESS: Found commit events"
@@ -67,7 +67,7 @@ test_issue_events() {
     echo "🔍 Testing: Issue events (kind 30620)..."
     
     # Query for issue events (kind 30620)
-    ISSUE_EVENTS=$(nak req --author "$PUBKEY" -k 30620 wss://relay.damus.io | jq -r '.id' 2>/dev/null)
+    ISSUE_EVENTS=$(nak req --author "$PUBKEY" -k 30620 $RELAY | jq -r '.id' 2>/dev/null)
     
     if [ -n "$ISSUE_EVENTS" ]; then
         echo "✅ SUCCESS: Found issue events"
@@ -85,7 +85,7 @@ test_pr_events() {
     echo "🔍 Testing: Pull Request events (kind 30619)..."
     
     # Query for PR events (kind 30619)
-    PR_EVENTS=$(nak req --author "$PUBKEY" -k 30619 wss://relay.damus.io | jq -r '.id' 2>/dev/null)
+    PR_EVENTS=$(nak req --author "$PUBKEY" -k 30619 $RELAY | jq -r '.id' 2>/dev/null)
     
     if [ -n "$PR_EVENTS" ]; then
         echo "✅ SUCCESS: Found pull request events"

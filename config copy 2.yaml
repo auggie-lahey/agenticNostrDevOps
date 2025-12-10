@@ -1,0 +1,39 @@
+nostr:
+  identity:
+    private_key:
+      nsec: "nsec1n9ume67uprhrln3wvagc470kdzes9x00d9r0yqdgdl6wgxkgxqaqdc6m6z"
+      generated_at: "2025-12-09T23:28:20Z"
+    public_key:
+      npub: "npub1lfs258m95stdt2rrd7d5f4xsu7jnhahshje0uzku8d6lmvqqg84q325zu3"
+      generated_at: "2025-12-09T23:28:20Z"
+  board:
+    id: "devops27941"
+    event_id: "981376a91d73329f2569db4771e5920802ab39f64e7629c27266294bf1da432b"
+    naddr: "naddr1qq9kgetkdac8xv3h8y6rzq3qlfs258m95stdt2rrd7d5f4xsu7jnhahshje0uzku8d6lmvqqg84qxpqqqpm96na8g0r"
+    kanbanstr_url: "https://www.kanbanstr.com/#/board/fa60aa1f65a416d5a8636f9b44d4d0e7a53bf6f0bcb2fe0adc3b75fdb00041ea/devops27941"
+    columns:
+      - name: "Ideas"
+        color: "#9B59B6"
+      - name: "Backlog"
+        color: "#E74C3C"
+      - name: "In Progress"
+        color: "#F39C12"
+      - name: "Testing"
+        color: "#3498DB"
+      - name: "Review"
+        color: "#2ECC71"
+      - name: "Done"
+        color: "#95A5A6"
+    created_at: "2025-12-09T23:32:06Z"
+  repository:
+    id: devops27941
+    event_id: efb1c8c3679ba9e5dd00ece4ced0b10e2a02055d4c7dd08f286a77282d4d489a
+    naddr: naddr1qq9kgetkdac8xv3h8y6rzq3qlfs258m95stdt2rrd7d5f4xsu7jnhahshje0uzku8d6lmvqqg84qxpqqqpmejadnx2y
+    gitworkshop_url: https://gitworkshop.dev/npub1lfs258m95stdt2rrd7d5f4xsu7jnhahshje0uzku8d6lmvqqg84q325zu3/relay.damus.io/devops27941
+    identifier: devops27941
+    title: DevOps Workflow Platform
+    description: A comprehensive DevOps workflow platform built on Nostr technology
+    pubkey: fa60aa1f65a416d5a8636f9b44d4d0e7a53bf6f0bcb2fe0adc3b75fdb00041ea
+    relay: $RELAY
+    kind: 30617
+    created_at: "2025-12-09T23:53:29Z"

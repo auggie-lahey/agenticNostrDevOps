@@ -74,7 +74,7 @@ UPDATED_EVENT=$($NAK_PATH event \
     -t "s=$NEW_STATUS" \
     -c "Task: $CARD_TITLE" \
     --sec "$NSEC" \
-    wss://relay.damus.io)
+    $RELAY)
 
 if [ -n "$UPDATED_EVENT" ]; then
     echo "✓ Card updated/created successfully!"
@@ -85,7 +85,7 @@ else
 fi
 
 # Generate Highlighter URL for debugging
-NEVENT_ENCODED=$($NAK_PATH encode nevent --author "$CONSISTENT_PUBKEY" --relay wss://relay.damus.io "$(echo "$UPDATED_EVENT" | jq -r '.id')")
+NEVENT_ENCODED=$($NAK_PATH encode nevent --author "$CONSISTENT_PUBKEY" --relay $RELAY "$(echo "$UPDATED_EVENT" | jq -r '.id')")
 echo ""
 echo "Highlighter URL: https://highlighter.com/a/$NEVENT_ENCODED"
 
@@ -98,7 +98,7 @@ echo "Querying relay to confirm '$CARD_TITLE' is now in '$NEW_STATUS'..."
 sleep 2
 
 # Query the card by our consistent identifier
-VERIFICATION_RESULT=$($NAK_PATH req --author "$CONSISTENT_PUBKEY" -k 30302 wss://relay.damus.io | jq --arg identifier "$CARD_IDENTIFIER" 'select(.tags[] | .[0] == "d" and .[1] == $identifier) | .tags[] | select(.[0] == "s")[1] // "UNMAPPED"' | sort | uniq | tail -1 | tr -d '"')
+VERIFICATION_RESULT=$($NAK_PATH req --author "$CONSISTENT_PUBKEY" -k 30302 $RELAY | jq --arg identifier "$CARD_IDENTIFIER" 'select(.tags[] | .[0] == "d" and .[1] == $identifier) | .tags[] | select(.[0] == "s")[1] // "UNMAPPED"' | sort | uniq | tail -1 | tr -d '"')
 
 if [ "$VERIFICATION_RESULT" = "$NEW_STATUS" ]; then
     echo "✅ VERIFICATION SUCCESSFUL: Card is now in '$NEW_STATUS' column"

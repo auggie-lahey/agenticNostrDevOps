@@ -72,7 +72,7 @@ CONSISTENT_PUBKEY=$(nak key public "$NSEC")
 echo "Waiting for event propagation..."
 sleep 5
 
-QUERY_RESULT=$(nak req --author "$CONSISTENT_PUBKEY" -k 30617 wss://relay.damus.io | jq --arg repo_id "$REPO_ID" 'select(.id == $repo_id) | .id')
+QUERY_RESULT=$(nak req --author "$CONSISTENT_PUBKEY" -k 30617 $RELAY | jq --arg repo_id "$REPO_ID" 'select(.id == $repo_id) | .id')
 
 if [ "$QUERY_RESULT" = "\"$REPO_ID\"" ]; then
     echo "✅ PASSED: Repository found on relay"
@@ -112,7 +112,7 @@ COMMIT_EVENT=$(nak event \
     -t "type=commit" \
     -c "$COMMIT_CONTENT" \
     --sec "$NSEC" \
-    wss://relay.damus.io)
+    $RELAY)
 
 if [ -z "$COMMIT_EVENT" ]; then
     echo "❌ FAILED: Could not create commit event"
@@ -152,7 +152,7 @@ ISSUE_EVENT=$(nak event \
     -t "labels=ci-cd,automation,infrastructure" \
     -c "$ISSUE_CONTENT" \
     --sec "$NSEC" \
-    wss://relay.damus.io)
+    $RELAY)
 
 if [ -z "$ISSUE_EVENT" ]; then
     echo "❌ FAILED: Could not create issue event"
@@ -194,7 +194,7 @@ PR_EVENT=$(nak event \
     -t "base=main" \
     -c "$PR_CONTENT" \
     --sec "$NSEC" \
-    wss://relay.damus.io)
+    $RELAY)
 
 if [ -z "$PR_EVENT" ]; then
     echo "❌ FAILED: Could not create pull request event"
@@ -211,10 +211,10 @@ echo "Test 7: Querying all repository events..."
 echo "Querying repository events (limiting to recent events due to nak CLI constraints)..."
 
 # Since nak doesn't support multiple kinds, we'll query separately and combine
-REPO_30617=$(nak req --author "$CONSISTENT_PUBKEY" -k 30617 -l 10 wss://relay.damus.io | jq --arg repo "$REPO_IDENTIFIER" 'select(.tags[] | .[0] == "d" and .[1] == $repo) | .id' 2>/dev/null || echo "")
-REPO_30618=$(nak req --author "$CONSISTENT_PUBKEY" -k 30618 -l 10 wss://relay.damus.io | jq --arg repo "$REPO_IDENTIFIER" 'select(.tags[] | .[0] == "repo" and .[1] == $repo) | .id' 2>/dev/null || echo "")
-REPO_30619=$(nak req --author "$CONSISTENT_PUBKEY" -k 30619 -l 10 wss://relay.damus.io | jq --arg repo "$REPO_IDENTIFIER" 'select(.tags[] | .[0] == "repo" and .[1] == $repo) | .id' 2>/dev/null || echo "")
-REPO_30620=$(nak req --author "$CONSISTENT_PUBKEY" -k 30620 -l 10 wss://relay.damus.io | jq --arg repo "$REPO_IDENTIFIER" 'select(.tags[] | .[0] == "repo" and .[1] == $repo) | .id' 2>/dev/null || echo")
+REPO_30617=$(nak req --author "$CONSISTENT_PUBKEY" -k 30617 -l 10 $RELAY | jq --arg repo "$REPO_IDENTIFIER" 'select(.tags[] | .[0] == "d" and .[1] == $repo) | .id' 2>/dev/null || echo "")
+REPO_30618=$(nak req --author "$CONSISTENT_PUBKEY" -k 30618 -l 10 $RELAY | jq --arg repo "$REPO_IDENTIFIER" 'select(.tags[] | .[0] == "repo" and .[1] == $repo) | .id' 2>/dev/null || echo "")
+REPO_30619=$(nak req --author "$CONSISTENT_PUBKEY" -k 30619 -l 10 $RELAY | jq --arg repo "$REPO_IDENTIFIER" 'select(.tags[] | .[0] == "repo" and .[1] == $repo) | .id' 2>/dev/null || echo "")
+REPO_30620=$(nak req --author "$CONSISTENT_PUBKEY" -k 30620 -l 10 $RELAY | jq --arg repo "$REPO_IDENTIFIER" 'select(.tags[] | .[0] == "repo" and .[1] == $repo) | .id' 2>/dev/null || echo")
 
 # Count events (simplified - just checking if each kind exists)
 REPO_COUNT=0
@@ -267,7 +267,7 @@ TEST_RESULTS=$(cat << EOF
   },
   "total_events_found": $TOTAL_EVENTS,
   "status": "PASSED",
-  "relay": "wss://relay.damus.io"
+  "relay": "$RELAY"
 }
 EOF
 )
@@ -280,4 +280,4 @@ echo "🎉 ALL TESTS PASSED! Nostr Git repository is working correctly."
 echo ""
 echo "=== REPOSITORY ACCESS ==="
 echo "Repository NAddr: $(jq -r '.naddr' nostr_git_repo.json)"
-echo "Highlighter URL: https://highlighter.com/a/$(nak encode nevent --author "$CONSISTENT_PUBKEY" --relay wss://relay.damus.io "$REPO_ID")"
+echo "Highlighter URL: https://highlighter.com/a/$(nak encode nevent --author "$CONSISTENT_PUBKEY" --relay $RELAY "$REPO_ID")"

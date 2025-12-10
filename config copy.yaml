@@ -34,6 +34,6 @@ nostr:
     title: DevOps Workflow Platform
     description: A comprehensive DevOps workflow platform built on Nostr technology
     pubkey: 76d3460a13ea583f0cf0ee21e8acd191340af9227db2ab3615672c49acb9c5ec
-    relay: wss://relay.damus.io
+    relay: $RELAY
     kind: 30617
     created_at: "2025-12-06T12:00:24Z"

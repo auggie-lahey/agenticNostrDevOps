@@ -44,7 +44,7 @@ BOARD_EVENT=$(nak event \
     -t "col=$REVIEW_UUID;Review;4" \
     -t "col=$DONE_UUID;Done;5" \
     --sec "$NSEC" \
-    wss://relay.damus.io)
+    $RELAY)
 
 if [ -z "$BOARD_EVENT" ]; then
     echo "Error: Failed to create board event"

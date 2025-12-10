@@ -30,7 +30,7 @@ This folder contains JavaScript scripts for creating and publishing Kanban board
 - **URL**: https://www.kanbanstr.com/#/board/b4b030aea662b2b47c57fca22cd9dc259079a8b5da89ac5aa2b6661af54ef710/my-kanban-board-final
 - **Board ID**: `my-kanban-board-final`
 - **Event ID**: `130df5fd97239b3a722e355e7b15cee5a08b6c8087c423b0abf2984ea07e4cf5`
-- **Published to**: `wss://relay.damus.io` (board) + `wss://relay.nostr.band` (cards) ✅
+- **Published to**: `$RELAY` (board) + `wss://relay.nostr.band` (cards) ✅
 
 ## Project: CloudSync Pro
 - **Total Cards**: 10 (5 in Backlog, 5 in Todo)
@@ -66,7 +66,7 @@ npm run generate-naddr
 
 ## Default Relay
 
-**Damus relay (`wss://relay.damus.io`)** is now the default for all operations.
+**Damus relay (`$RELAY`)** is now the default for all operations.
 
 ## NIP-100 Specification
 

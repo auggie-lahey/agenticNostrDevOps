@@ -27,7 +27,7 @@ echo "Creating cards for board..."
 
 # Get column UUIDs from the board
 echo "Fetching column UUIDs..."
-BOARD_COLS=$(nak req --kind 30301 -d "$BOARD_ID" wss://relay.damus.io | jq -r '.tags[] | select(.[0] == "col") | .[1:3] | @tsv')
+BOARD_COLS=$(nak req --kind 30301 -d "$BOARD_ID" $RELAY | jq -r '.tags[] | select(.[0] == "col") | .[1:3] | @tsv')
 
 # Extract column UUIDs
 IDEAS_UUID=$(echo "$BOARD_COLS" | grep "Ideas" | awk '{print $1}')
@@ -60,7 +60,7 @@ while (( i < 5 )); do
         -t "s=Backlog" \
         -c "$RANDOM" \
         --sec "$NSEC" \
-        wss://relay.damus.io -q)
+        $RELAY -q)
 
     if [ -n "$CARD_EVENT" ]; then
         echo "✓ Created card $i"

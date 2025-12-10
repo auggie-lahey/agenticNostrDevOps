@@ -108,7 +108,7 @@ update_card() {
         -t "t:$card_title" \
         -c "Card: $card_title" \
         --sec "$NSEC" \
-        wss://relay.damus.io 2>&1)
+        $RELAY 2>&1)
     
     if echo "$UPDATE_RESULT" | grep -q "SUCCESS"; then
         echo "   ✅ Update event sent successfully"
@@ -117,7 +117,7 @@ update_card() {
         echo "   🔍 Verifying card status on relay..."
         sleep 3  # Wait for event propagation
         
-        VERIFICATION_RESULT=$($NAK_PATH req --author "$PUBKEY" -k 30302 wss://relay.damus.io | \
+        VERIFICATION_RESULT=$($NAK_PATH req --author "$PUBKEY" -k 30302 $RELAY | \
             jq --arg identifier "$CARD_IDENTIFIER" \
             'select(.tags[] | .[0] == "d" and .[1] == $identifier) | .tags[] | select(.[0] == "s")[1] // "UNMAPPED"' | \
             sort | uniq | tail -1 | tr -d '"')

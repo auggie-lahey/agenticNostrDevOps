@@ -9,7 +9,6 @@
 # - Added actual commit hash extraction after Git commit creation
 # - Updated owner pubkey to use consistent key from secret key
 # - Used proper nip34.json structure with identifier, name, description, web, owner, grasp-servers, earliest-unique-commit, maintainers
-
 set -e
 
 # Check arguments
@@ -35,7 +34,7 @@ USER_NPUB=$(yq eval '.nostr.identity.public_key.npub' "$config")
 GITWORKSHOP_URL="https://gitworkshop.dev/$USER_NPUB/relay.damus.io/$REPO_NAME"
 
 echo "Creating repository event with proper NIP-34 structure..."
-
+sleep 30
 # Create repository event using the hex pubkey directly from the secret key
 # FIXED: Use placeholder for earliest commit since we don't have it yet
 REPO_EVENT=$(nak event \
@@ -48,12 +47,12 @@ REPO_EVENT=$(nak event \
     -t "web=$GITWORKSHOP_URL" \
     -t "relays=wss://relay.ngit.dev" \
     -t "relays=wss://gitnostr.com" \
-    -t "relays=wss://relay.damus.io" \
+    -t "relays=$RELAY" \
     -t "maintainers=$USER_NPUB" \
     -t "alt=git repository: $REPO_NAME" \
     -c "" \
     --sec "$NSEC" \
-    wss://relay.ngit.dev wss://gitnostr.com wss://relay.damus.io)
+    wss://relay.ngit.dev wss://gitnostr.com $RELAY)
 
 if [ -z "$REPO_EVENT" ]; then
     echo "Error: Failed to create repository event"
@@ -130,6 +129,7 @@ MAX_ATTEMPTS=6  # 6 attempts * 30 seconds = 3 minutes
 ATTEMPT=1
 
 while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+    sleep 30
     echo "Push attempt $ATTEMPT/$MAX_ATTEMPTS..."
     nak git push --sec $NSEC --force
     if nak git push --sec $NSEC 2>/dev/null; then
@@ -139,7 +139,6 @@ while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
     else
         if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
             echo "Push failed (attempt $ATTEMPT/$MAX_ATTEMPTS), waiting 30 seconds before retry..."
-            sleep 30
         else
             echo "✗ Git push failed after $MAX_ATTEMPTS attempts"
         fi
@@ -165,7 +164,7 @@ else
     \"title\": \"$REPO_TITLE\",
     \"description\": \"$REPO_DESCRIPTION\",
     \"pubkey\": \"$CONSISTENT_PUBKEY\",
-    \"relay\": \"wss://relay.damus.io\",
+    \"relay\": \"$RELAY\",
     \"kind\": 30617,
     \"created_at\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
     }" "$config" > temp.yaml && mv temp.yaml "$config"
@@ -186,7 +185,7 @@ echo "✓ Nostr Git remotes configured"
 # echo ""
 
 # # Generate Highlighter URL for debugging
-# NEVENT_ENCODED=$(nak encode nevent --author "$CONSISTENT_PUBKEY" --relay wss://relay.damus.io "$REPO_EVENT_ID")
+# NEVENT_ENCODED=$(nak encode nevent --author "$CONSISTENT_PUBKEY" --relay $RELAY "$REPO_EVENT_ID")
 # echo "Highlighter URL: https://highlighter.com/a/$NEVENT_ENCODED"
 
 # echo ""
@@ -197,5 +196,5 @@ echo "✓ Nostr Git remotes configured"
 # echo "Event ID: $REPO_EVENT_ID"
 # echo "NAddr: $REPO_NADDR"
 # echo "Git Workshop URL: $GITWORKSHOP_URL"
-# echo "Relay: wss://relay.damus.io"
+# echo "Relay: $RELAY"
 # echo "Created: $(date -u +%Y-%m-%dT%H:%M:%SZ)"

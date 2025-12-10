@@ -7,7 +7,7 @@ set -e
 
 # Use only damus relay
 RELAYS=(
-    "wss://relay.damus.io"
+    "$RELAY"
 )
 # Extract board information from YAML
 BOARD_ID=$(yq e -r ".nostr.board.id" "$config")
