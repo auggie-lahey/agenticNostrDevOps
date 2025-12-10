@@ -1,29 +1,29 @@
 #!/bin/bash
 
-# Update Kanban Cards Script
-# Updates existing cards by changing their status/column
+# Generic Update Card Script
+# Updates any field of a kanban card with a new value
 
 set -e
 
 # Check arguments
-if [ $# -lt 2 ]; then
-    echo "Usage: $0 <nsec> <npub> <card_title> <new_status>"
-    echo "Example: $0 nsec1... npub1... \"Database Migration\" \"Backlog\""
+if [ $# -lt 3 ]; then
+    echo "Usage: $0 <card_title> <field> <new_value> [comment]"
+    echo "Example: $0 \"Database Migration\" \"description\" \"Updated description\""
+    echo "Example: $0 \"API Integration\" \"status\" \"Review\" \"Moving to review\""
     echo ""
-    echo "Available statuses: Ideas, Backlog, In Progress, Testing, Review, Done, To Do"
+    echo "Available fields: title, description, status, priority, rank, content"
     exit 1
 fi
 
 CARD_TITLE="$1"
-export NEW_STATUS="$2"
-comment="$3"
-NEW_COLUMN=$(yq eval -r '.nostr.board.columns[] | select(.name == "'"$NEW_STATUS"'") | .uuid' $config)
-echo $NEW_COLUMN
+FIELD="$2"
+NEW_VALUE="$3"
+COMMENT="$4"
 
-echo "Updating kanban card..."
+echo "Updating kanban card field..."
 echo "Card: $CARD_TITLE"
-echo "New Status: $NEW_STATUS"
-
+echo "Field: $FIELD"
+echo "New Value: $NEW_VALUE"
 
 # Extract board information
 BOARD_ID=$(yq eval -r '.nostr.board.id' $config) 
@@ -38,7 +38,7 @@ if [ -z "$CARD_QUERY" ]; then
     exit 1
 fi
 
-# Filter out corrupted cards (with newlines in d tags) and get the most recent clean version
+# Filter out corrupted cards and get the most recent clean version
 echo "Filtering out corrupted cards..."
 CARD_JSON=$(echo "$CARD_QUERY" | jq 'select(
   ((.tags[] | select(.[0] == "d")[1]) | type == "string") and 
@@ -59,70 +59,72 @@ else
 fi
 
 CARD_ID=$(echo "$CARD_JSON" | jq -r '.id')
-# CARD_PRIORITY=$(echo "$CARD_JSON" | jq -r '.tags[] | select(.[0] == "priority")[1] // "medium"')
-# CARD_RANK=$(echo "$CARD_JSON" | jq -r '.tags[] | select(.[0] == "rank")[1] // "0"')
-# CARD_DESCRIPTION=$(echo "$CARD_JSON" | jq -r '.tags[] | select(.[0] == "description")[1] // ""')
-# CARD_CONTENT=$(echo "$CARD_JSON" | jq -r '.content')
-# CURRENT_STATUS=$(echo "$CARD_JSON" | jq -r '.tags[] | select(.[0] == "s")[1] // "UNMAPPED"')
 
+# Extract existing card data
+CARD_TITLE_EXISTING=$(echo "$CARD_JSON" | jq -r '(.tags[] | select(.[0] == "title"))[1] // "'"$CARD_TITLE"'"')
+CARD_DESCRIPTION=$(echo "$CARD_JSON" | jq -r '(.tags[] | select(.[0] == "description"))[1] // ""')
 CARD_PRIORITY=$(echo "$CARD_JSON" | jq -r '(.tags[] | select(.[0] == "priority"))[1] // "medium"')
 CARD_RANK=$(echo "$CARD_JSON" | jq -r '(.tags[] | select(.[0] == "rank"))[1] // "0"')
-CARD_DESCRIPTION=$(echo "$CARD_JSON" | jq -r '(.tags[] | select(.[0] == "description"))[1] // ""')
+CARD_STATUS=$(echo "$CARD_JSON" | jq -r '(.tags[] | select(.[0] == "s"))[1] // "Ideas"')
 CARD_CONTENT=$(echo "$CARD_JSON" | jq -r '.content')
-CURRENT_STATUS=$(echo "$CARD_JSON" | jq -r '(.tags[] | select(.[0] == "s"))[1] // "UNMAPPED"')
+
+# Update the specific field
+case "$FIELD" in
+    "title")
+        CARD_TITLE_EXISTING="$NEW_VALUE"
+        ;;
+    "description")
+        CARD_DESCRIPTION="$NEW_VALUE"
+        ;;
+    "status"|"s")
+        CARD_STATUS="$NEW_VALUE"
+        ;;
+    "priority")
+        CARD_PRIORITY="$NEW_VALUE"
+        ;;
+    "rank")
+        CARD_RANK="$NEW_VALUE"
+        ;;
+    "content")
+        CARD_CONTENT="$NEW_VALUE"
+        ;;
+    *)
+        echo "Error: Unknown field '$FIELD'"
+        echo "Available fields: title, description, status, priority, rank, content"
+        exit 1
+        ;;
+esac
 
 echo "Found card: $CARD_ID"
-echo "Current status: $CURRENT_STATUS"
+echo "Updating $FIELD to: $NEW_VALUE"
 echo "Using identifier: $CARD_IDENTIFIER"
 echo ""
 
-# Debug: Show what other cards with this title exist
-TOTAL_CARDS=$(echo "$CARD_QUERY" | jq -s '. | length')
-echo "Debug: Found $TOTAL_CARDS cards with title '$CARD_TITLE' on this board"
-if [ "$TOTAL_CARDS" -gt 1 ]; then
-    echo "Debug: Other card statuses:"
-    echo "$CARD_QUERY" | jq -r '.tags[] | select(.[0] == "s")[1] // "UNMAPPED"' | sort | uniq -c
-    echo ""
-fi
+# Get column UUID for status updates
+NEW_COLUMN=$(yq eval -r '.nostr.board.columns[] | select(.name == "'"$CARD_STATUS"'") | .uuid' $config 2>/dev/null || echo "")
 
 # Create updated card event (replaceable event with same identifier)
-echo "Updating card to status: $NEW_STATUS"
+echo "Creating updated card event..."
 UPDATED_EVENT=$(nak event \
     --kind 30302 \
     -d "$CARD_IDENTIFIER" \
     -t "a=30301:$CONSISTENT_PUBKEY:$BOARD_ID" \
-    -t "title=$CARD_TITLE" \
+    -t "title=$CARD_TITLE_EXISTING" \
     -t "description=$CARD_DESCRIPTION" \
-    -t "alt=A card titled $CARD_TITLE" \
+    -t "alt=A card titled $CARD_TITLE_EXISTING" \
     -t "priority=$CARD_PRIORITY" \
     -t "rank=$CARD_RANK" \
-    -t "s=$NEW_STATUS" \
-    -t "col=$NEW_STATUS" \
-    -c "$CARD_CONTENT" \
-    --sec "$NSEC" )
-    # $RELAY)
-
-UPDATED_EVENT=$(nak event \
-    --kind 30302 \
-    -d "$CARD_IDENTIFIER" \
-    -t "a=30301:$CONSISTENT_PUBKEY:$BOARD_ID" \
-    -t "title=$CARD_TITLE" \
-    -t "description=$CARD_DESCRIPTION" \
-    -t "alt=A card titled $CARD_TITLE" \
-    -t "priority=$CARD_PRIORITY" \
-    -t "rank=$CARD_RANK" \
-    -t "s=$NEW_STATUS" \
-    -t "col=$NEW_STATUS" \
+    -t "s=$CARD_STATUS" \
+    $([ -n "$NEW_COLUMN" ] && echo "-t \"col=$NEW_COLUMN\"") \
     -c "$CARD_CONTENT" \
     --sec "$NSEC" \
     $RELAY)
 
-
 if [ -n "$UPDATED_EVENT" ]; then
-    echo "✓ Card updated successfully!"
+    echo "✓ Card field updated successfully!"
     echo "✓ Event ID: $(echo "$UPDATED_EVENT" | jq -r '.id')"
 else
-    echo "✗ Failed to update card"
+    echo "✗ Failed to update card field"
     exit 1
 fi
 
@@ -130,4 +132,4 @@ fi
 NEVENT_ENCODED=$(nak encode nevent --author "$CONSISTENT_PUBKEY" --relay $RELAY "$(echo "$UPDATED_EVENT" | jq -r '.id')")
 echo ""
 echo "Highlighter URL: https://highlighter.com/a/$NEVENT_ENCODED"
-
+echo "✓ Card field update completed!"
