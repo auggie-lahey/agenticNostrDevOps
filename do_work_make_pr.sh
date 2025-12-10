@@ -13,6 +13,7 @@ if [ $# -lt 1 ]; then
 fi
 
 CARD_TITLE="$1"
+./updatecard.sh $CARD_TITLE status "In Progress" "moving to inprogress"
 
 # Load configuration (if not already loaded)
 if [ -z "$config" ]; then
@@ -204,7 +205,6 @@ cd ..
 hex=$(nak req -p $NPUB_DECODED -k 1617 $RELAY | jq -r '.id')
 NOTE_ID=$(nak encode nevent $hex)
 PR_URL="https://gitworkshop.dev/$NOTE_ID"
-#PR_URL="${GITWORKSHOP_URL}/pr/$NOTE_ID"
 
 if [ "$PUSH_SUCCESS" = false ]; then
     echo "⚠️  Git push did not complete within 2 minutes"
@@ -254,3 +254,4 @@ Implementation completed at: $(date)"
 ./updatecard.sh "$CARD_TITLE" "description" "$UPDATED_DESCRIPTION" "PR link added"
 
 echo "✓ Work and PR creation completed successfully!"
+./updatecard.sh $CARD_TITLE status "Review" "moving to inprogress"

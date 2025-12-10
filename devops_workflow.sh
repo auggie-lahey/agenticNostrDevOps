@@ -104,10 +104,9 @@ echo "move cards to in progress"
 # # do work 
 # ./do_work_make_pr.sh $CARD_TITLE
 
-./updatecard.sh $CARD_TITLE status "In Progress" "moving to inprogress"
+# ./updatecard.sh $CARD_TITLE status "In Progress" "moving to inprogress"
 # do work 
 ./do_work_make_pr.sh $CARD_TITLE
 # ./test_do_work_make_pr.sh $CARD_TITLE
-# ./update_kanban_cards.sh $CARD_TITLE "Review" "moving to Review"
 yq e '.nostr.board.kanbanstr_url' $config -r
 yq eval -r '.nostr.identity.private_key.nsec' $config
