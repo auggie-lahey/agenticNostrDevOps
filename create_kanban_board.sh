@@ -83,16 +83,22 @@ cat >> "${config}" << EOF
     columns:
       - name: "Ideas"
         color: "#9B59B6"
+        uuid: "$IDEAS_UUID"
       - name: "Backlog"
         color: "#E74C3C"
+        uuid: "$IDEAS_UUID"
       - name: "In Progress"
         color: "#F39C12"
+        uuid: "$IN_PROGRESS_UUID"
       - name: "Testing"
         color: "#3498DB"
+        uuid: "$TESTING_UUID"
       - name: "Review"
         color: "#2ECC71"
+        uuid: "$REVIEW_UUID"
       - name: "Done"
         color: "#95A5A6"
+        uuid: "$DONE_UUID"
     created_at: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 EOF
 

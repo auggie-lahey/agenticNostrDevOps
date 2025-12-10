@@ -45,7 +45,7 @@ echo "  Testing: $TESTING_UUID"
 echo "  Review: $REVIEW_UUID"
 echo "  Done: $DONE_UUID"
 
-i=0
+i=4
 while (( i < 5 )); do
     CARD_EVENT=$(nak event \
         --kind 30302 \

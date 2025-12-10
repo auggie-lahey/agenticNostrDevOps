@@ -6,7 +6,7 @@
 set -e
 
 # Check arguments
-if [ $# -lt 3 ]; then
+if [ $# -lt 2 ]; then
     echo "Usage: $0 <nsec> <npub> <card_title> <new_status>"
     echo "Example: $0 nsec1... npub1... \"Database Migration\" \"Backlog\""
     echo ""
@@ -14,49 +14,24 @@ if [ $# -lt 3 ]; then
     exit 1
 fi
 
-NSEC="$1"
-NPUB="$2"
-CARD_TITLE="$3"
-NEW_STATUS="$4"
-
-NAK_PATH="./nak/nak"
+CARD_TITLE="$1"
+export NEW_STATUS="$2"
+comment="$3"
+NEW_COLUMN=$(yq eval -r '.nostr.board.columns[] | select(.name == "'"$NEW_STATUS"'") | .uuid' $config)
+echo $NEW_COLUMN
 
 echo "Updating kanban card..."
 echo "Card: $CARD_TITLE"
 echo "New Status: $NEW_STATUS"
 
-# Check if nak binary exists
-if [ ! -f "$NAK_PATH" ]; then
-    echo "Error: nak binary not found at $NAK_PATH"
-    exit 1
-fi
-
-# Check if YAML file exists
-YAML_FILE="nostr_keys.yaml"
-if [ ! -f "$YAML_FILE" ]; then
-    echo "Error: $YAML_FILE not found"
-    exit 1
-fi
 
 # Extract board information
-BOARD_ID=$(grep -A1 "board:" "$YAML_FILE" | grep "id:" | awk '{print $2}' | sed 's/^"//;s/"$//')
-if [ -z "$BOARD_ID" ]; then
-    echo "Error: Board ID not found in YAML file"
-    exit 1
-fi
-
-# Extract pubkey from npub
-CONSISTENT_PUBKEY=$($NAK_PATH decode "$NPUB")
-if [ -z "$CONSISTENT_PUBKEY" ]; then
-    echo "Error: Could not decode npub to pubkey"
-    exit 1
-fi
-
+BOARD_ID=$(yq eval -r '.nostr.board.id' $config) 
 echo "Board ID: $BOARD_ID"
 
 # Find the card with the given title AND on our specific board
 echo "Searching for card: $CARD_TITLE on board: $BOARD_ID"
-CARD_QUERY=$($NAK_PATH req --author "$CONSISTENT_PUBKEY" -k 30302 $RELAY | jq --arg title "$CARD_TITLE" --arg board_ref "30301:$CONSISTENT_PUBKEY:$BOARD_ID" 'select((.tags[] | .[0] == "title" and .[1] == $title) and (.tags[] | .[0] == "a" and .[1] == $board_ref))')
+CARD_QUERY=$(nak req --author "$CONSISTENT_PUBKEY" -k 30302 $RELAY | jq --arg title "$CARD_TITLE" --arg board_ref "30301:$CONSISTENT_PUBKEY:$BOARD_ID" 'select((.tags[] | .[0] == "title" and .[1] == $title) and (.tags[] | .[0] == "a" and .[1] == $board_ref))')
 
 if [ -z "$CARD_QUERY" ]; then
     echo "Error: Card '$CARD_TITLE' not found"
@@ -84,11 +59,17 @@ else
 fi
 
 CARD_ID=$(echo "$CARD_JSON" | jq -r '.id')
-CARD_PRIORITY=$(echo "$CARD_JSON" | jq -r '.tags[] | select(.[0] == "priority")[1] // "medium"')
-CARD_RANK=$(echo "$CARD_JSON" | jq -r '.tags[] | select(.[0] == "rank")[1] // "0"')
-CARD_DESCRIPTION=$(echo "$CARD_JSON" | jq -r '.tags[] | select(.[0] == "description")[1] // ""')
+# CARD_PRIORITY=$(echo "$CARD_JSON" | jq -r '.tags[] | select(.[0] == "priority")[1] // "medium"')
+# CARD_RANK=$(echo "$CARD_JSON" | jq -r '.tags[] | select(.[0] == "rank")[1] // "0"')
+# CARD_DESCRIPTION=$(echo "$CARD_JSON" | jq -r '.tags[] | select(.[0] == "description")[1] // ""')
+# CARD_CONTENT=$(echo "$CARD_JSON" | jq -r '.content')
+# CURRENT_STATUS=$(echo "$CARD_JSON" | jq -r '.tags[] | select(.[0] == "s")[1] // "UNMAPPED"')
+
+CARD_PRIORITY=$(echo "$CARD_JSON" | jq -r '(.tags[] | select(.[0] == "priority"))[1] // "medium"')
+CARD_RANK=$(echo "$CARD_JSON" | jq -r '(.tags[] | select(.[0] == "rank"))[1] // "0"')
+CARD_DESCRIPTION=$(echo "$CARD_JSON" | jq -r '(.tags[] | select(.[0] == "description"))[1] // ""')
 CARD_CONTENT=$(echo "$CARD_JSON" | jq -r '.content')
-CURRENT_STATUS=$(echo "$CARD_JSON" | jq -r '.tags[] | select(.[0] == "s")[1] // "UNMAPPED"')
+CURRENT_STATUS=$(echo "$CARD_JSON" | jq -r '(.tags[] | select(.[0] == "s"))[1] // "UNMAPPED"')
 
 echo "Found card: $CARD_ID"
 echo "Current status: $CURRENT_STATUS"
@@ -106,7 +87,7 @@ fi
 
 # Create updated card event (replaceable event with same identifier)
 echo "Updating card to status: $NEW_STATUS"
-UPDATED_EVENT=$($NAK_PATH event \
+UPDATED_EVENT=$(nak event \
     --kind 30302 \
     -d "$CARD_IDENTIFIER" \
     -t "a=30301:$CONSISTENT_PUBKEY:$BOARD_ID" \
@@ -116,9 +97,26 @@ UPDATED_EVENT=$($NAK_PATH event \
     -t "priority=$CARD_PRIORITY" \
     -t "rank=$CARD_RANK" \
     -t "s=$NEW_STATUS" \
+    -t "col=$NEW_STATUS" \
+    -c "$CARD_CONTENT" \
+    --sec "$NSEC" )
+    # $RELAY)
+
+UPDATED_EVENT=$(nak event \
+    --kind 30302 \
+    -d "$CARD_IDENTIFIER" \
+    -t "a=30301:$CONSISTENT_PUBKEY:$BOARD_ID" \
+    -t "title=$CARD_TITLE" \
+    -t "description=$CARD_DESCRIPTION" \
+    -t "alt=A card titled $CARD_TITLE" \
+    -t "priority=$CARD_PRIORITY" \
+    -t "rank=$CARD_RANK" \
+    -t "s=$NEW_STATUS" \
+    -t "col=$NEW_STATUS" \
     -c "$CARD_CONTENT" \
     --sec "$NSEC" \
     $RELAY)
+
 
 if [ -n "$UPDATED_EVENT" ]; then
     echo "✓ Card updated successfully!"
@@ -129,6 +127,6 @@ else
 fi
 
 # Generate Highlighter URL for debugging
-NEVENT_ENCODED=$($NAK_PATH encode nevent --author "$CONSISTENT_PUBKEY" --relay $RELAY "$(echo "$UPDATED_EVENT" | jq -r '.id')")
+NEVENT_ENCODED=$(nak encode nevent --author "$CONSISTENT_PUBKEY" --relay $RELAY "$(echo "$UPDATED_EVENT" | jq -r '.id')")
 echo ""
 echo "Highlighter URL: https://highlighter.com/a/$NEVENT_ENCODED"

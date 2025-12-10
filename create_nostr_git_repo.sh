@@ -128,6 +128,7 @@ PUSH_SUCCESS=false
 MAX_ATTEMPTS=6  # 6 attempts * 30 seconds = 3 minutes
 ATTEMPT=1
 
+set +e
 while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
     sleep 30
     echo "Push attempt $ATTEMPT/$MAX_ATTEMPTS..."
@@ -146,6 +147,7 @@ while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
     
     ATTEMPT=$((ATTEMPT + 1))
 done
+set -e
 cd ..
 
 if [ "$PUSH_SUCCESS" = false ]; then
