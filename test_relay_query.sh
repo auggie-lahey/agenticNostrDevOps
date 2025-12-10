@@ -7,7 +7,7 @@ set -e
 
 # Use only damus relay
 RELAYS=(
-    "wss://relay.damus.io"
+    "$RELAY"
 )
 # Extract board information from YAML
 BOARD_ID=$(yq e -r ".nostr.board.id" "$config")
@@ -15,12 +15,7 @@ EVENT_ID=$(yq e -r ".nostr.board.event_id" "$config")
 NPUB=$(yq e -r ".nostr.identity.public_key.npub" "$config")
 
 # Extract pubkey from npub (this will match the actual event author)
-QUERY_PUBKEY=$(nak decode "$NPUB")
-if [ -z "$QUERY_PUBKEY" ]; then
-    echo "Error: Could not decode npub to pubkey"
-    exit 1
-fi
-
+QUERY_PUBKEY=$PUBKEY
 # Test 1: Query by event ID
 echo "Test 1: Querying by Event ID"
 EVENT_FOUND=false
@@ -42,7 +37,7 @@ fi
 echo "Test 2: Querying by Author and Kind"
 BOARD_EVENT_FOUND=false
 for RELAY in "${RELAYS[@]}"; do
-    AUTHOR_QUERY=$(nak req --author "$QUERY_PUBKEY" -k 30301 "$RELAY" 2>/dev/null | timeout 10 cat 2>/dev/null || echo "")
+    AUTHOR_QUERY=$(nak req --author "$QUERY_PUBKEY" -k 30301 "$RELAY" )
     if [ -n "$AUTHOR_QUERY" ]; then
         if echo "$AUTHOR_QUERY" | grep -q "$BOARD_ID"; then
             BOARD_EVENT_FOUND=true

@@ -1,5 +1,6 @@
 #!/bin/bash
 
+echo "generating keys"
 # Generate a new secret key (in hex format) once and store it
 SECRET_KEY_HEX=$(nak key generate)
 

@@ -10,17 +10,9 @@ echo "Testing card creation..."
 # Extract board information
 BOARD_ID=$(yq e -r '.nostr.board.id' "$config")
 EVENT_ID=$(yq e -r '.nostr.board.event_id' "$config")
-NPUB=$(yq e -r '.nostr.identity.public_key.npub' "$config")
-
-# Extract pubkey from npub (this will match the actual event author)
-QUERY_PUBKEY=$(nak decode "$NPUB")
-if [ -z "$QUERY_PUBKEY" ]; then
-    echo "Error: Could not decode npub to pubkey"
-    exit 1
-fi
 
 # Use only damus relay
-RELAYS=("wss://relay.damus.io")
+RELAYS=("$RELAY")
 
 # Test 1: Query board event to verify board exists
 echo "Test 1: Verifying board exists"
@@ -45,7 +37,7 @@ echo "Test 2: Querying for kanban cards"
 CARDS_FOUND=false
 CARD_COUNT=0
 for RELAY in "${RELAYS[@]}"; do
-    CARDS_QUERY=$(nak req --author "$QUERY_PUBKEY" -k 30302 "$RELAY" 2>/dev/null | timeout 10 cat 2>/dev/null || echo "")
+    CARDS_QUERY=$(nak req --author "$QUERY_PUBKEY" -k 30302 "$RELAY" -q)
     if [ -n "$CARDS_QUERY" ]; then
         BOARD_CARDS=$(echo "$CARDS_QUERY" | grep -o "$BOARD_ID" | wc -l)
         if [ "$BOARD_CARDS" -gt 0 ]; then
@@ -67,7 +59,7 @@ echo "Test 2.5: Verifying card board linking format"
 A_TAG_VALID=false
 # Check if cards have proper 'a' tags linking to board
 for RELAY in "${RELAYS[@]}"; do
-    CARDS_QUERY=$(nak req --author "$QUERY_PUBKEY" -k 30302 "$RELAY" 2>/dev/null | timeout 10 cat 2>/dev/null || echo "")
+    CARDS_QUERY=$(nak req --author "$QUERY_PUBKEY" -k 30302 "$RELAY" -q)
     if [ -n "$CARDS_QUERY" ]; then
         A_CARDS=$(echo "$CARDS_QUERY" | jq -r '.tags[] | select(.[0] == "a") | .[1]' | grep -c "30301:$QUERY_PUBKEY:$BOARD_ID" || echo "0")
         if [ "$A_CARDS" -gt 0 ]; then

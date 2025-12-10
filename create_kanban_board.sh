@@ -5,25 +5,11 @@
 
 set -e
 
-# Check arguments
-if [ $# -ne 2 ]; then
-    echo "Usage: $0 <nsec> <npub>"
-    exit 1
-fi
 
-NSEC="$1"
-NPUB="$2"
 BOARD_ID="devops$RANDOM"
 echo "Board ID: $BOARD_ID"
 
 echo "Creating new DevOps kanban board..."
-# Extract pubkey from npub - this is what nak uses for event creation
-echo "Extracting pubkey from npub (used for event creation)..."
-CONSISTENT_PUBKEY=$(nak decode "$NPUB")
-if [ -z "$CONSISTENT_PUBKEY" ]; then
-    echo "Error: Could not decode npub to pubkey"
-    exit 1
-fi
 echo "Using pubkey from npub: $CONSISTENT_PUBKEY"
 
 # Also extract pubkey from nsec for comparison
@@ -58,7 +44,7 @@ BOARD_EVENT=$(nak event \
     -t "col=$REVIEW_UUID;Review;4" \
     -t "col=$DONE_UUID;Done;5" \
     --sec "$NSEC" \
-    wss://relay.damus.io)
+    $RELAY)
 
 if [ -z "$BOARD_EVENT" ]; then
     echo "Error: Failed to create board event"

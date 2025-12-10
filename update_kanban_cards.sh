@@ -56,7 +56,7 @@ echo "Board ID: $BOARD_ID"
 
 # Find the card with the given title AND on our specific board
 echo "Searching for card: $CARD_TITLE on board: $BOARD_ID"
-CARD_QUERY=$($NAK_PATH req --author "$CONSISTENT_PUBKEY" -k 30302 wss://relay.damus.io | jq --arg title "$CARD_TITLE" --arg board_ref "30301:$CONSISTENT_PUBKEY:$BOARD_ID" 'select((.tags[] | .[0] == "title" and .[1] == $title) and (.tags[] | .[0] == "a" and .[1] == $board_ref))')
+CARD_QUERY=$($NAK_PATH req --author "$CONSISTENT_PUBKEY" -k 30302 $RELAY | jq --arg title "$CARD_TITLE" --arg board_ref "30301:$CONSISTENT_PUBKEY:$BOARD_ID" 'select((.tags[] | .[0] == "title" and .[1] == $title) and (.tags[] | .[0] == "a" and .[1] == $board_ref))')
 
 if [ -z "$CARD_QUERY" ]; then
     echo "Error: Card '$CARD_TITLE' not found"
@@ -118,7 +118,7 @@ UPDATED_EVENT=$($NAK_PATH event \
     -t "s=$NEW_STATUS" \
     -c "$CARD_CONTENT" \
     --sec "$NSEC" \
-    wss://relay.damus.io)
+    $RELAY)
 
 if [ -n "$UPDATED_EVENT" ]; then
     echo "✓ Card updated successfully!"
@@ -129,6 +129,6 @@ else
 fi
 
 # Generate Highlighter URL for debugging
-NEVENT_ENCODED=$($NAK_PATH encode nevent --author "$CONSISTENT_PUBKEY" --relay wss://relay.damus.io "$(echo "$UPDATED_EVENT" | jq -r '.id')")
+NEVENT_ENCODED=$($NAK_PATH encode nevent --author "$CONSISTENT_PUBKEY" --relay $RELAY "$(echo "$UPDATED_EVENT" | jq -r '.id')")
 echo ""
 echo "Highlighter URL: https://highlighter.com/a/$NEVENT_ENCODED"

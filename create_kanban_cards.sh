@@ -22,19 +22,12 @@ if [ -z "$BOARD_ID" ]; then
     exit 1
 fi
 
-# Extract pubkey from npub (consistent with event creation)
-CONSISTENT_PUBKEY=$(nak decode "$NPUB")
-if [ -z "$CONSISTENT_PUBKEY" ]; then
-    echo "Error: Could not decode npub to pubkey"
-    exit 1
-fi
-
 echo "Board ID: $BOARD_ID"
 echo "Creating cards for board..."
 
 # Get column UUIDs from the board
 echo "Fetching column UUIDs..."
-BOARD_COLS=$(nak req --kind 30301 -d "$BOARD_ID" wss://relay.damus.io | jq -r '.tags[] | select(.[0] == "col") | .[1:3] | @tsv')
+BOARD_COLS=$(nak req --kind 30301 -d "$BOARD_ID" $RELAY | jq -r '.tags[] | select(.[0] == "col") | .[1:3] | @tsv')
 
 # Extract column UUIDs
 IDEAS_UUID=$(echo "$BOARD_COLS" | grep "Ideas" | awk '{print $1}')
@@ -67,31 +60,13 @@ while (( i < 5 )); do
         -t "s=Backlog" \
         -c "$RANDOM" \
         --sec "$NSEC" \
-        wss://relay.damus.io)
+        $RELAY -q)
 
     if [ -n "$CARD_EVENT" ]; then
         echo "✓ Created card $i"
         i=$(($i+1))
     fi
-    sleep 1
+    sleep 3
 done
 
-# Step 4: Generate Highlighter URLs for debugging
-echo ""
-echo "=== HIGHLIGHTER DEBUG URLs ==="
-
-# Board Highlighter URL (from YAML)
-NADDR=$(yq e -r '.nostr.board.naddr' "$config")
-echo "Board:"
-echo "https://highlighter.com/a/$NADDR"
-echo "Latest Cards:"
-NPUB_DECODED=$(nak decode "$NPUB")
-CARD_EVENTS=$(nak req --author "$NPUB_DECODED" -k 30302 wss://relay.damus.io | jq -r '.id' | head -6)
-
-for CARD_ID in $CARD_EVENTS; do
-    if [ -n "$CARD_ID" ] && [ "$CARD_ID" != "null" ]; then
-        CARD_TITLE=$(nak req --id "$CARD_ID" wss://relay.damus.io | jq -r '.tags[] | select(.[0] == "title")[1]' 2>/dev/null || echo "Card $CARD_NUM")
-        NEVENT_ENCODED=$(nak encode nevent --author "$NPUB_DECODED" --relay wss://relay.damus.io "$CARD_ID")
-        echo "$CARD_TITLE: https://highlighter.com/a/$NEVENT_ENCODED"
-    fi
-done
+echo "finished creating"
